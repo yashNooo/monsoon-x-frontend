@@ -25,10 +25,32 @@
   }
   
   .btn-primary {
-    @apply px-6 py-2.5 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-primary/20 hover:shadow-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50;
+    @apply px-6 py-2.5 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-primary/20 hover:shadow-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
-    @apply px-6 py-2.5 bg-panel border border-primary/30 hover:border-primary/60 text-primary font-medium rounded-lg transition-all duration-200 hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50;
+    @apply px-6 py-2.5 bg-panel border border-primary/30 hover:border-primary/60 text-primary font-medium rounded-lg transition-all duration-200 hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
+}
+
+/* Leaflet dark theme integration */
+.leaflet-container {
+  font-family: inherit;
+  background-color: #040b16 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: #ffffff !important;
+}
+
+.custom-map-pin {
+  background: transparent;
+  border: none;
 }

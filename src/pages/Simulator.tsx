@@ -1,154 +1,248 @@
 import { useState, useEffect } from 'react';
-import { Activity, ArrowRight, CloudRain, Sun, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { 
+  Activity, 
+  ShieldCheck, 
+  Droplet,
+  ArrowRight
+} from 'lucide-react';
 import { useLocation } from '../context/LocationContext';
-import { getSimulator } from '../services/api';
+import { getForecastAnalysis, runSimulatorScenarios, type SimulationResult } from '../services/forecastService';
+import { CROPS_CATALOG } from '../data/agriculturalData';
+import { Link } from 'react-router-dom';
 
-const Simulator = () => {
-  const { locationId, locationName } = useLocation();
-  const [sowingDate, setSowingDate] = useState('Wait 7 Days');
-  const [crop, setCrop] = useState('Pearl Millet (Bajra)');
-  const [data, setData] = useState<any>(null);
+export const Simulator = () => {
+  const { latitude, longitude, block, selectedCropId, setSelectedCropId } = useLocation();
+  const [selectedScenario, setSelectedScenario] = useState<'Sow Today' | 'Wait 7 Days' | 'Wait 14 Days'>('Wait 7 Days');
+  const [simResults, setSimResults] = useState<SimulationResult[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const crop = CROPS_CATALOG.find(c => c.id === selectedCropId) || CROPS_CATALOG[0];
+
   useEffect(() => {
-    const fetchData = async () => {
+    const runSim = async () => {
       setLoading(true);
-      const res = await getSimulator(locationId, crop, sowingDate);
-      setData(res);
-      setLoading(false);
+      try {
+        const analysis = await getForecastAnalysis(latitude, longitude, selectedCropId, 14);
+        const scenarios = runSimulatorScenarios(analysis);
+        setSimResults(scenarios);
+      } catch (err) {
+        console.warn('Simulation failed:', err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchData();
-  }, [locationId, crop, sowingDate]);
-  
+    runSim();
+  }, [latitude, longitude, selectedCropId]);
+
+  const activeResult = simResults.find(s => s.scenario === selectedScenario) || simResults[0];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="heading-primary flex items-center gap-3">
-            <Activity className="text-primary w-8 h-8" />
-            What-If Sowing Simulator
-          </h2>
-          <p className="text-sm text-textMuted mt-1">
-            Evaluate agricultural decisions against probabilistic climate scenarios.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 glass-panel p-6 flex flex-col gap-6">
+      {/* Top Banner */}
+      <div className="glass-panel p-6 border-l-4 border-l-primary relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-textMuted mb-3">Location & Crop</h3>
-            <div className="space-y-3">
-              <div className="w-full bg-panelBorder/20 border border-panelBorder rounded-lg p-2 text-sm text-textMuted select-none">
-                {locationName}
-              </div>
-              <select value={crop} onChange={e => setCrop(e.target.value)} className="w-full bg-panelBorder/50 border border-panelBorder rounded-lg p-2 text-sm text-textMain outline-none focus:border-primary/50">
-                <option>Pearl Millet (Bajra)</option>
-                <option>Sorghum (Jowar)</option>
-                <option>Green Gram (Moong)</option>
-              </select>
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="w-5 h-5 text-primary" />
+              <h2 className="heading-primary text-2xl font-bold">Dynamic Sowing Window Simulator</h2>
             </div>
+            <p className="subheading text-sm max-w-3xl">
+              Model seedling emergence, water availability, and false-onset vulnerability across time intervals. Test scenarios before committing expensive seed and fertilizer inputs.
+            </p>
           </div>
-          
-          <div>
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-textMuted mb-3">Simulated Action</h3>
-            <div className="space-y-2">
-              {['Sow Today', 'Wait 7 Days', 'Wait 14 Days'].map(option => (
-                <button
-                  key={option}
-                  onClick={() => setSowingDate(option)}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all ${sowingDate === option ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-panelBorder/30 text-textMuted hover:bg-panelBorder/50'}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{option}</span>
-                    {sowingDate === option && <CheckCircle2 className="w-4 h-4" />}
-                  </div>
-                </button>
+
+          {/* Crop Selector inside Simulator */}
+          <div className="flex items-center gap-2 bg-background/80 border border-panelBorder p-2 rounded-xl shrink-0">
+            <span className="text-xs text-textMuted uppercase font-semibold">Simulate Crop:</span>
+            <select
+              value={selectedCropId}
+              onChange={(e) => setSelectedCropId(e.target.value)}
+              className="bg-transparent text-sm font-bold text-textMain focus:outline-none cursor-pointer"
+            >
+              {CROPS_CATALOG.map((c) => (
+                <option key={c.id} value={c.id} className="bg-background text-textMain">
+                  {c.localName} ({c.name})
+                </option>
               ))}
-            </div>
+            </select>
           </div>
         </div>
-
-        <div className="lg:col-span-3 glass-panel p-6 relative min-h-[400px]">
-          {loading ? (
-            <div className="absolute inset-0 flex justify-center items-center"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div></div>
-          ) : data && (
-            <>
-              <div className="flex items-center justify-between border-b border-panelBorder pb-4 mb-6">
-                <h3 className="text-xl font-bold">Simulation Results: <span className="text-primary">{sowingDate}</span></h3>
-                <div className="flex gap-2">
-                  {data.isDemo && <span className="px-3 py-1 rounded bg-primary/20 text-xs font-semibold uppercase tracking-widest text-primary">Demo</span>}
-                  <span className="px-3 py-1 rounded bg-panelBorder/50 text-xs font-semibold uppercase tracking-widest text-textMuted">Confidence: High</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-panelBorder/30 rounded-xl p-4 border border-panelBorder">
-                  <div className="flex items-center gap-2 mb-2 text-textMuted">
-                    <CloudRain className="w-4 h-4" /> <span className="text-sm font-semibold uppercase tracking-wider">Onset Probability</span>
-                  </div>
-                  <div className="text-3xl font-bold text-textMain">{data.onset_probability}%</div>
-                </div>
-                <div className={`bg-panelBorder/30 rounded-xl p-4 border ${data.break_risk > 50 ? 'border-danger/30' : 'border-panelBorder'}`}>
-                  <div className="flex items-center gap-2 mb-2 text-textMuted">
-                    <Sun className="w-4 h-4" /> <span className="text-sm font-semibold uppercase tracking-wider">Break Risk</span>
-                  </div>
-                  <div className={`text-3xl font-bold ${data.break_risk > 50 ? 'text-danger' : data.break_risk > 30 ? 'text-warning' : 'text-success'}`}>
-                    {data.break_risk}%
-                  </div>
-                </div>
-                <div className="bg-panelBorder/30 rounded-xl p-4 border border-panelBorder">
-                  <div className="flex items-center gap-2 mb-2 text-textMuted">
-                    <Calendar className="w-4 h-4" /> <span className="text-sm font-semibold uppercase tracking-wider">Rainfall Outlook</span>
-                  </div>
-                  <div className="text-xl font-bold text-textMain mt-2">
-                    {data.rainfall_outlook}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-panelBorder/20 rounded-xl p-6 border border-primary/20 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
-                <h4 className="text-lg font-bold text-primary mb-3">Decision Support Advisory</h4>
-                
-                {sowingDate === 'Sow Today' && (
-                  <div className="space-y-4">
-                    <p className="text-textMain">Sowing today carries significant risk. While initial moisture is present, there is a high probability ({data.break_risk}%) of a subsequent 7-10 day dry spell starting next week.</p>
-                    <div className="flex items-start gap-3 bg-danger/10 p-3 rounded border border-danger/20 text-sm">
-                      <AlertTriangle className="w-5 h-5 text-danger shrink-0" />
-                      <p className="text-danger font-medium">Likely Outcome: High risk of seedling mortality due to moisture stress during early vegetative stage.</p>
-                    </div>
-                  </div>
-                )}
-                
-                {sowingDate === 'Wait 7 Days' && (
-                  <div className="space-y-4">
-                    <p className="text-textMain">Waiting 7 days aligns with a higher-confidence rainfall window under the current forecast scenario. MJO indicators become significantly more favorable.</p>
-                    <div className="flex items-start gap-3 bg-success/10 p-3 rounded border border-success/20 text-sm">
-                      <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
-                      <p className="text-success font-medium">Likely Outcome: Favorable soil moisture for germination and lower risk of immediate dry spells.</p>
-                    </div>
-                  </div>
-                )}
-                
-                {sowingDate === 'Wait 14 Days' && (
-                  <div className="space-y-4">
-                    <p className="text-textMain">Waiting 14 days offers the highest onset probability, but may delay the crop cycle unnecessarily.</p>
-                    <div className="flex items-start gap-3 bg-warning/10 p-3 rounded border border-warning/20 text-sm">
-                      <Sun className="w-5 h-5 text-warning shrink-0" />
-                      <p className="text-warning font-medium">Consideration: Very safe from false onset, but monitor for potential late-season moisture stress if the monsoon withdraws early.</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="mt-6 pt-4 border-t border-panelBorder/50">
-                  <p className="text-xs text-textMuted italic">Note: This is a probabilistic simulation based on current atmospheric conditions and historical data. Consult local agricultural extension services for field-specific decisions.</p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
       </div>
+
+      {/* Scenario Selection Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(['Sow Today', 'Wait 7 Days', 'Wait 14 Days'] as const).map((sc) => {
+          const res = simResults.find(s => s.scenario === sc);
+          const isSelected = selectedScenario === sc;
+
+          return (
+            <button
+              key={sc}
+              onClick={() => setSelectedScenario(sc)}
+              className={`glass-panel p-4 text-left transition-all relative overflow-hidden ${
+                isSelected
+                  ? 'border-primary ring-1 ring-primary bg-primary/10 shadow-lg shadow-primary/10'
+                  : 'hover:border-primary/40'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs uppercase font-mono text-textMuted font-bold">Strategy Option</span>
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-panelBorder/50 text-textMain">
+                  {res?.confidence || 'High'} Conf.
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-textMain">{sc}</h3>
+              <p className="text-xs text-textMuted mt-1">
+                {sc === 'Sow Today' && 'Immediate planting with existing topsoil moisture'}
+                {sc === 'Wait 7 Days' && 'Defer until follow-up rain confirms monsoon front'}
+                {sc === 'Wait 14 Days' && 'Extended deferral to avoid early season break'}
+              </p>
+
+              {res && (
+                <div className="mt-3 pt-3 border-t border-panelBorder/40 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-textMuted text-[11px] block">Onset Prob:</span>
+                    <span className="font-bold text-emerald-400">{res.onsetProbability}%</span>
+                  </div>
+                  <div>
+                    <span className="text-textMuted text-[11px] block">Break Risk:</span>
+                    <span className="font-bold text-amber-400">{res.breakRisk}%</span>
+                  </div>
+                  <div>
+                    <span className="text-textMuted text-[11px] block">Expected Rain:</span>
+                    <span className="font-bold text-textMain">{res.expectedRainfallMm} mm</span>
+                  </div>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Detailed Simulation Outcome View */}
+      {loading || !activeResult ? (
+        <div className="glass-panel p-12 text-center text-textMuted">
+          <div className="inline-block animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mb-3"></div>
+          <p className="text-sm">Recalculating agro-meteorological simulation...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Scenario Details */}
+          <div className="lg:col-span-2 glass-panel p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-panelBorder/50 pb-4">
+              <div>
+                <span className="text-xs uppercase font-mono text-primary font-bold">
+                  Simulation Outcome &middot; {block} Block
+                </span>
+                <h3 className="text-xl font-extrabold text-white mt-0.5">
+                  Scenario: {activeResult.scenario} for {crop.name}
+                </h3>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-textMuted block">Agronomic Suitability</span>
+                <span className={`text-2xl font-bold ${activeResult.suitabilityScore >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {activeResult.suitabilityScore}/100
+                </span>
+              </div>
+            </div>
+
+            {/* Metrics Breakdown */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-background/60 p-3 rounded-lg border border-panelBorder/40">
+                <span className="text-[11px] text-textMuted uppercase block">Sustained Moisture</span>
+                <span className="text-xl font-bold text-emerald-400">{activeResult.onsetProbability}%</span>
+                <span className="text-[10px] text-textMuted block mt-0.5">Probabilistic</span>
+              </div>
+              <div className="bg-background/60 p-3 rounded-lg border border-panelBorder/40">
+                <span className="text-[11px] text-textMuted uppercase block">Dry Break Risk</span>
+                <span className={`text-xl font-bold ${activeResult.breakRisk > 50 ? 'text-amber-400' : 'text-textMain'}`}>
+                  {activeResult.breakRisk}%
+                </span>
+                <span className="text-[10px] text-textMuted block mt-0.5">Seedling stress</span>
+              </div>
+              <div className="bg-background/60 p-3 rounded-lg border border-panelBorder/40">
+                <span className="text-[11px] text-textMuted uppercase block">False Onset Hazard</span>
+                <span className={`text-xl font-bold ${activeResult.falseOnsetRisk > 50 ? 'text-rose-400' : 'text-textMain'}`}>
+                  {activeResult.falseOnsetRisk}%
+                </span>
+                <span className="text-[10px] text-textMuted block mt-0.5">Desiccation threat</span>
+              </div>
+              <div className="bg-background/60 p-3 rounded-lg border border-panelBorder/40">
+                <span className="text-[11px] text-textMuted uppercase block">Rainfall Window</span>
+                <span className="text-xl font-bold text-cyan-400">{activeResult.expectedRainfallMm} mm</span>
+                <span className="text-[10px] text-textMuted block mt-0.5">Req: {crop.minimumRainfallMm}mm</span>
+              </div>
+            </div>
+
+            {/* Bilingual Recommendation */}
+            <div className="space-y-2.5 pt-2">
+              <div className="p-3.5 rounded-lg bg-primary/10 border border-primary/30">
+                <div className="text-xs font-bold text-primary mb-1 uppercase font-mono">
+                  [किसान सलाह]:
+                </div>
+                <div className="text-sm text-textMain leading-relaxed font-medium">
+                  {activeResult.recommendationHi}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-panel/50 border border-panelBorder/40 text-xs text-textMuted leading-relaxed">
+                <span className="font-semibold text-textMain mr-1">English Advisory:</span>
+                {activeResult.recommendationEn}
+              </div>
+            </div>
+
+            {/* Scientific disclaimer */}
+            <div className="p-3 rounded-lg bg-panel/30 border border-panelBorder/30 text-[11px] text-textMuted flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+              <span>
+                All simulated outcomes represent probabilistic distributions derived from Open-Meteo ensemble feeds and crop moisture parameters. No simulation constitutes an unconditional crop guarantee.
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: Agronomic Profile & Notes */}
+          <div className="glass-panel p-5 space-y-4">
+            <h3 className="font-bold text-base text-textMain flex items-center gap-2">
+              <Droplet className="w-4 h-4 text-primary" />
+              Agronomic Specifications
+            </h3>
+            
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-lg bg-background/50 border border-panelBorder/40">
+                <div className="text-textMuted text-[11px]">Crop & Variety</div>
+                <div className="font-bold text-textMain text-sm">{crop.name} ({crop.localName})</div>
+                <div className="text-[11px] font-mono text-primary mt-0.5">{crop.scientificName}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-lg bg-background/50 border border-panelBorder/40">
+                  <div className="text-textMuted text-[10px] uppercase">Min Moisture</div>
+                  <div className="font-bold text-sm text-textMain">{crop.minimumRainfallMm} mm</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-background/50 border border-panelBorder/40">
+                  <div className="text-textMuted text-[10px] uppercase">Dry Tolerance</div>
+                  <div className="font-bold text-sm text-textMain">{crop.drySpellToleranceDays} days</div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-background/50 border border-panelBorder/40 space-y-1">
+                <div className="text-textMuted text-[11px] font-semibold">Agronomist Sowing Notes:</div>
+                <div className="text-textMuted text-[11px] leading-relaxed">
+                  {crop.sowingNotes}
+                </div>
+              </div>
+            </div>
+
+            <Link
+              to="/command-center"
+              className="btn-primary w-full py-2 text-xs flex items-center justify-center gap-1.5"
+            >
+              <span>Back to Command Center</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

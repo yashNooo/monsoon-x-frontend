@@ -31,9 +31,9 @@ const LandingPage = () => {
           <Link to="/command-center" className="btn-primary flex items-center gap-2 text-lg px-8 py-3">
             Explore Forecast <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className="btn-secondary flex items-center gap-2 text-lg px-8 py-3">
+          <Link to="/map" className="btn-secondary flex items-center gap-2 text-lg px-8 py-3">
             Open Risk Map
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left">

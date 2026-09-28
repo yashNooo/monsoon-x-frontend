@@ -1,0 +1,8 @@
+{
+  "name": "Monsoon-X",
+  "description": "False-onset and break-aware hyperlocal monsoon intelligence predicting weather behavior 7-30 days ahead for agricultural decision support.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

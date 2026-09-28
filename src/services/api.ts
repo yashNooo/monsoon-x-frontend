@@ -7,11 +7,11 @@ const api = axios.create({
 });
 
 // Fallback Demo Data if backend is down
-const isBackendAvailable = async () => {
+export const isBackendAvailable = async () => {
   try {
     await api.get('/health');
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -20,7 +20,7 @@ export const getForecast = async (locationId: string, horizon: number) => {
   try {
     const response = await api.get(`/forecast?location_id=${locationId}&horizon=${horizon}`);
     return response.data;
-  } catch (error) {
+  } catch {
     console.warn("Backend unavailable. Using DEMO data.");
     return {
       location: locationId,
@@ -39,7 +39,7 @@ export const getSimulator = async (locationId: string, crop: string, scenario: s
   try {
     const response = await api.post('/simulator', { location_id: locationId, crop, scenario });
     return response.data;
-  } catch (error) {
+  } catch {
     console.warn("Backend unavailable for Simulator. Using DEMO data.");
     return {
       onset_probability: scenario === 'Wait 7 Days' ? 84 : 62,

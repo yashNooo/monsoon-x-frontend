@@ -1,4 +1,4 @@
-import { FileText, Database, GitMerge, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Database, GitMerge, CheckCircle, ShieldAlert } from 'lucide-react';
 
 const Methodology = () => {
   return (
