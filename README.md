@@ -41,6 +41,14 @@
    - Supports user accounts, saved farmer locations, historical forecast runs, and dispatch logs via Supabase RLS.
    - Seamless zero-configuration Demo Mode if Supabase environment variables are omitted.
 
+8. **Gemini Agro-Climatic Voice & Chat Advisor**:
+   - Conversational assistant powered by **Gemini 3.8** (`gemini-3.8-flash`).
+   - Automatically synchronizes with the active farm location selected on the Risk Map (block, panchayat, district, coordinates) and active crop requirements.
+   - **Voice Input**: Real-time microphone speech-to-text recognition supporting Hindi (`hi-IN`) and English.
+   - **Voice Output**: Text-to-speech voice playback using Gemini TTS (`gemini-3.8-flash-lite-tts`) with browser speech synthesis fallback.
+   - **Real-Time Live Voice Conversations**: Integrated with **Gemini 3.8 Live API** (`gemini-3.8-live`) via bidirectional WebSocket audio streaming.
+   - Available via both a persistent floating assistant widget on every screen and a dedicated `/advisor` command page.
+
 ---
 
 ## 🚀 Local Run Instructions

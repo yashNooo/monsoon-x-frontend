@@ -9,6 +9,7 @@ import SowingWindow from './pages/SowingWindow';
 import OfficerDashboard from './pages/OfficerDashboard';
 import Methodology from './pages/Methodology';
 import { ForecastHistory } from './pages/ForecastHistory';
+import { AiAdvisorPage } from './pages/AiAdvisorPage';
 import { LocationProvider } from './context/LocationContext';
 import { AuthProvider } from './context/AuthContext';
 
@@ -22,6 +23,7 @@ function App() {
               <Route index element={<LandingPage />} />
               <Route path="command-center" element={<CommandCenter />} />
               <Route path="map" element={<RiskMap />} />
+              <Route path="advisor" element={<AiAdvisorPage />} />
               <Route path="false-onset" element={<FalseOnset />} />
               <Route path="simulator" element={<Simulator />} />
               <Route path="sowing-window" element={<SowingWindow />} />

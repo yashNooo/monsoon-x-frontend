@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { CloudRain, Menu, X, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
+import { GeminiChatbot } from './GeminiChatbot';
 
 const Layout = () => {
   const routerLocation = useLocation();
@@ -13,6 +14,7 @@ const Layout = () => {
   const navLinks = [
     { to: '/command-center', label: 'Dashboard' },
     { to: '/map', label: 'Risk Map' },
+    { to: '/advisor', label: 'AI Advisor' },
     { to: '/false-onset', label: 'False Onset' },
     { to: '/simulator', label: 'Simulator' },
     { to: '/sowing-window', label: 'Sowing' },
@@ -157,6 +159,9 @@ const Layout = () => {
 
       {/* Authentication and Profile Switcher Modal */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+
+      {/* Persistent Gemini Voice + Chat AI Advisor */}
+      <GeminiChatbot />
     </div>
   );
 };
